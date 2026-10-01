@@ -1,0 +1,45 @@
+name: Instagram用コピー作成
+
+# 🌸2026-10-01 追加: 日本語のファイル名の画像を、Instagramが確実に受け取れる
+#   英数字の名前のJPEGコピー（ig/フォルダ）に自動変換する。
+#   画像を追加・差し替えしてpushするたびに自動で動く。鍵の登録は不要
+#   （このリポジトリ自身の権限で ig/ フォルダに書き込む）。
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'ig/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python環境のセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 画像ライブラリのインストール
+        run: pip install pillow
+
+      - name: Instagram用コピーを作成
+        run: python tools/make_ig_copies.py
+
+      - name: 変更があればコミット
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A ig
+          if git diff --cached --quiet; then
+            echo "ig/ に変更はありません"
+          else
+            git commit -m "Instagram用コピーを更新"
+            git push
+          fi
